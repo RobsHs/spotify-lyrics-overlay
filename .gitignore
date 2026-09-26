@@ -1,0 +1,23 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local Lyrics Cache
+.lyrics_cache/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# IDE configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating System Files
+Thumbs.db
+Desktop.ini
+.DS_Store
