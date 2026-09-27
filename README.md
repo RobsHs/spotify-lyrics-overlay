@@ -7,60 +7,54 @@
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg?style=for-the-badge&logo=python)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?style=for-the-badge&logo=windows)](https://microsoft.com/windows)
-[![Spotify Integration](https://img.shields.io/badge/Spotify-GSMTC%20Native-1DB954.svg?style=for-the-badge&logo=spotify)](https://spotify.com)
+[![Spotify Integration](https://img.shields.io/badge/Spotify-Native%20GSMTC-1DB954.svg?style=for-the-badge&logo=spotify)](https://spotify.com)
+[![Zero API Key](https://img.shields.io/badge/Setup-Zero%20API%20Key-brightgreen.svg?style=for-the-badge)](#-zero-configuration-setup)
 
-A futuristic, transparent desktop overlay for Windows. When playing music on Spotify, each lyric line spawns in its own tactical terminal card that gently floats upwards while swaying left and right, with cyber-matrix streams and card colors dynamically adapting to the album cover artwork.
+<br/>
+
+<img src="assets/preview.png" alt="Spotify Rising Hacker Lyrics Overlay Preview" width="900" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+
+<br/>
+
+**A transparent, holographic tactical terminal overlay for Windows.**  
+When playing music on Spotify, each lyric line spawns in its own separate tactical HUD card that floats gently upwards while swaying left and right. In the background, digital matrix streams (`01`, `10`, `0x`, `λ`, `§`) and musical notes (`♪`, `♫`, `♬`, `♩`) rain down, while the neon glow and card colors dynamically adapt to the album cover artwork!
 
 </div>
 
 ---
 
-## ⚡ Key Highlights
+## ⚡ Why It Stands Out
 
-- **Rising Individual Cards**: Each sung lyric line spawns as its own tactical terminal card at the bottom of the screen and drifts smoothly upwards while swaying gently left and right.
-- **Dynamic Color Quantization**: Extracts dominant hues, saturated neons, and ambient shades from the active Spotify album artwork to tint HUD cards and falling particles.
-- **Cyber Matrix & Music Glyphs**: Digital matrix streams (`01`, `10`, `0x`, `λ`, `§`) intertwined with musical notes (`♪`, `♫`, `♬`, `♩`) falling from the top of the screen.
-- **Zero-Delay Precision Sync**: Automatically compensates for Windows GSMTC timeline latency with high-resolution `time.perf_counter()` extrapolation.
-- **Live Decryption Effect**: Lyrics rapidly resolve from scrambled hex bytes into readable text.
-- **Integrated Audio Spectrum Equalizer**: Real-time pulsing 28-bar audio spectrum visualizer rendered directly onto each card.
-- **Hardware-Accelerated Transparency**: Fullscreen borderless transparent overlay (`pygame.NOFRAME` + Win32 chroma-key) floating seamlessly over VS Code, games, browsers, or desktop wallpapers.
+| Feature | Ordinary Lyrics Widgets | **Spotify Rising Hacker Overlay** |
+|:---|:---:|:---:|
+| **Card Movement** | Static or Bouncing DVD | **Floating Upwards & Swaying Left/Right** 🎈 |
+| **Multi-Card Flow** | Only 1 line at a time | **Separate rising cards fading smoothly upwards** ✨ |
+| **Color Theming** | Hardcoded Dark / Light | **Dynamic color extraction from active album cover** 🎨 |
+| **Particle System** | None | **Digital Matrix Rain + Musical Glyphs** 🌧️ |
+| **Audio Equalizer** | None | **Integrated 28-Bar Spectrum Visualizer** 📊 |
+| **API Key Required**| Yes (Spotify Dev tokens) | **100% Zero API Keys Needed (Plug & Play)** 🔌 |
+| **Sync Precision** | Often 2–3s delayed | **Zero-Delay Hardware Timestamp Extrapolation** ⚡ |
+| **Desktop Overlay** | Standard Windowed | **100% Transparent Click-Through Overlay** 🖥️ |
 
 ---
 
-## 📸 Visual Architecture
+## 🌟 Core Highlights
 
-```
-  ┌─────────────────────────────────────────────────────────────┐
-  │  ↓ ♪               ↓ 0x4F             ↓ ♫        ↓ 01       │  <-- Falling Matrix Rain
-  │                                                             │
-  │     ┌[LRC.DECODE // PID:0x5A] [01:32] [SYNC_ACTIVE]┐        │
-  │     │ > "And the toughest part is that we both..." │        │  <-- Older Card (Fading out)
-  │     │ ▂▃▅▆▇█▇▅▃                                    │        │
-  │     └──────────────────────────────────────────────┘        │
-  │                     ↑ floating upwards                      │
-  │                                                             │
-  │          ┌[LRC.DECODE // PID:0x6F] [01:38] [SYNC_ACTIVE]┐   │
-  │          │ > "What happened to you"                     │   │  <-- Mid Card (Ascending)
-  │          │ ▂▃▅▆▇█▇▅▃                                    │   │
-  │          └──────────────────────────────────────────────┘   │
-  │                          ↑ floating upwards                 │
-  │                                                             │
-  │     ┌[LRC.DECODE // PID:0x7B] [01:42] [SYNC_ACTIVE]┐        │
-  │     │ > "Merry Christmas, please don't call" █     │        │  <-- Newest Active Card
-  │     │ ▂▃▅▆▇█▇▅▃                                    │        │      (Bright & In Focus)
-  │     │ [🖼️] BLEACHERS // MERRY CHRISTMAS // #DC1E14 │        │
-  │     └──────────────────────────────────────────────┘        │
-  └─────────────────────────────────────────────────────────────┘
-```
+- **🎈 Rising Separate Cards**: Each lyric line is its own tactical terminal card that spawns at the bottom, rises gently upwards (`y -= speed`), and sways horizontally (`Δx = sin(...) * amp`), with older cards smoothly dissolving into the top.
+- **⚡ Zero-Delay Precision Sync**: Eliminates Windows GSMTC timeline caching delay using microsecond `time.perf_counter()` hardware compensation.
+- **🎨 Dynamic Album Cover Adaptation**: Quantizes colors from active album art to tint neon borders, equalizers, text accents, and matrix particles without sudden jarring color shifts (*smooth lerp crossfade*).
+- **🌧️ Digital Matrix Rain**: Combines hex streams, binary bytes, and musical notes falling gracefully in the background.
+- **⌨️ Live Calibration & Hotkeys**: Advance or delay lyrics live with `[` / `]` or arrow keys without restarting.
+- **🖥️ Click-Through Mode**: Press `T` to let mouse clicks pass directly through to VS Code, browsers, or games behind the overlay.
 
 ---
 
 ## ⌨️ Controls & Hotkeys
 
-All hotkeys work both inside the application and globally across Windows:
+All hotkeys work both inside the application window and globally across Windows:
 
 | Hotkey | Global Shortcut | Action | Description |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `↑` / `]` | `Ctrl+Shift+↑` | **Advance Lyrics (+0.10s)** | Calibrate lyrics to appear earlier if audio leads. |
 | `↓` / `[` | `Ctrl+Shift+↓` | **Delay Lyrics (-0.10s)** | Calibrate lyrics to appear later if text leads. |
 | `0` | - | **Reset Calibration** | Reset sync offset to default (+0.25s vocal anticipation). |
@@ -75,43 +69,59 @@ All hotkeys work both inside the application and globally across Windows:
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
-### Prerequisites
+### 1. Clone & Install
+```bash
+git clone https://github.com/RobsHs/spotify-lyrics-overlay.git
+cd spotify-lyrics-overlay
+pip install -r requirements.txt
+```
 
-- **OS**: Windows 10 or Windows 11
-- **Python**: 3.10, 3.11, or 3.12
-- **Spotify**: Spotify Desktop application (or web player)
-
-### Installation
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/RobsHs/spotify-lyrics-overlay.git
-   cd spotify-lyrics-overlay
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Run the overlay**:
-   ```bash
-   python song.py
-   ```
+### 2. Launch
+```bash
+python song.py
+```
+*Play any song on Spotify, and your holographic lyrics overlay will immediately lock onto your music!*
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ Architecture & Data Flow
 
-1. **Media Capture**: Uses `winsdk.windows.media.control` (`GlobalSystemMediaTransportControlsSessionManager`) to monitor active Spotify sessions, playback states, track info, and cover art thumbnails without requiring a Spotify Developer API key.
-2. **Lyric Synchronization**: Queries [LRCLIB](https://lrclib.net/) for synchronized timestamped lyrics (`[mm:ss.xx]`) and caches results in `.lyrics_cache/` for instant subsequent retrieval.
-3. **Palette Extraction**: Color quantization and HSV analysis extract dominant colors, contrast borders, and vibrant accent hues from album art.
-4. **Physics & Animation Engine**: Runs at 60 FPS via Pygame with independent rising cards, sinusoidal left-right sway, alpha dissipation curves, and particle systems.
+```
+┌──────────────────┐       Winsdk GSMTC       ┌──────────────────────┐
+│  Spotify Desktop │ ───────────────────────► │ Windows Media Bridge │
+└──────────────────┘                          └──────────┬───────────┘
+                                                         │ Title + Artist + Art
+                                                         ▼
+┌──────────────────┐       LRCLIB API         ┌──────────────────────┐
+│ Local Disk Cache │ ◄──────────────────────► │  Lyrics Fetch Engine │
+└──────────────────┘                          └──────────┬───────────┘
+                                                         │ Synced [mm:ss]
+                                                         ▼
+┌──────────────────┐    Pillow Quantization   ┌──────────────────────┐
+│  Adaptive Colors │ ◄─────────────────────── │ Palette Lerp Engine  │
+└──────────────────┘                          └──────────┬───────────┘
+                                                         │ Tint Colors
+                                                         ▼
+┌──────────────────┐   Chroma-Key Win32 API   ┌──────────────────────┐
+│ Windows Desktop  │ ◄─────────────────────── │ 60 FPS Pygame Engine │
+│ Transparent HUD  │                          │ Rising Cards + Rain  │
+└──────────────────┘                          └──────────────────────┘
+```
+
+---
+
+## 🤝 Community & Sharing
+
+Love this project? Share it with the community:
+
+- **Reddit**: Post to [r/Python](https://reddit.com/r/Python), [r/unixporn](https://reddit.com/r/unixporn), or [r/spotify](https://reddit.com/r/spotify)!
+- **Twitter / X**: Tag `#Python #Spotify #Cyberpunk #OpenSource` and mention `@RobsHs`!
+- **GitHub**: Give a ⭐ Star to support development!
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+Distributed under the [MIT License](LICENSE). Copyright © 2026 RobsHs.
