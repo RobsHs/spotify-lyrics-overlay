@@ -1,8 +1,11 @@
 """
-Spotify Real-Time Lyrics & Dynamic Album Cover Overlay (Rising Cyber-Hacker HUD Edition)
-Each lyric line spawns in its own separate tactical terminal HUD card that floats
-gently upwards while swaying left and right, with cyber-matrix falling streams,
-mini audio equalizers, and real-time color adaptation to the Spotify album cover.
+Spotify Real-Time Synced Lyrics Overlay (Aesthetic Floating Cards Edition)
+==========================================================================
+Clean, aesthetic, TikTok-ready desktop lyrics overlay for Windows.
+When playing songs on Spotify, each lyric line appears in its own separate
+frosted glass card that rises smoothly upwards while gently swaying left and right.
+The card colors, borders, and falling musical notes dynamically adapt to the
+dominant colors of the active album cover with zero-delay precision sync.
 """
 
 import math
@@ -21,13 +24,12 @@ import re
 import colorsys
 import ctypes
 from datetime import datetime, timezone
-from ctypes import wintypes
 from pathlib import Path
 from PIL import Image
 
 import pygame
 
-# Ensure UTF-8 line-buffered output to terminal on Windows
+# Ensure UTF-8 output on Windows console
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
 except Exception:
@@ -41,22 +43,21 @@ pygame.init()
 pygame.font.init()
 
 # -------------------------------------------------------------
-# Configuration & Cyber Palette Defaults
+# Configuration & Theme Defaults
 # -------------------------------------------------------------
 SPEED_MULTIPLIER = 1.0
-BASE_FLOAT_SPEED = 1.6  # Gentle rising speed for floating cards
-DEFAULT_SYNC_OFFSET = 0.25  # Anticipation offset for natural human reading
+BASE_FLOAT_SPEED = 1.45  # Smooth, graceful rising speed
+DEFAULT_SYNC_OFFSET = 0.20  # Subtle vocal anticipation offset for natural reading
 
-# Cyberpunk Terminal Fallback Theme
+# Elegant aesthetic fallback palette (warm twilight wine)
 DARK_CARD = {
-    "bg": "#0D0E12",
-    "card": "#13161F",
-    "text": "#F2F5FB",
-    "accent": "#00FF9D",          # Matrix neon green fallback
-    "glass_border": "#283244",
-    "shadow_outer": "#040508",
-    "shadow_inner": "#0A0D14",
-    "edge_light": "#3C4B66"
+    "bg": "#120B10",
+    "card": "#21141D",
+    "text": "#FDFEFE",
+    "accent": "#E63956",          # Vibrant crimson rose accent
+    "glass_border": "#542435",
+    "shadow_outer": "#0A0609",
+    "sub_text": "#B39DA8"
 }
 
 def hex_to_rgb(hex_str):
@@ -70,7 +71,7 @@ def rgb_to_hex(rgb):
 
 DEFAULT_THEME_RGB = {k: hex_to_rgb(v) for k, v in DARK_CARD.items()}
 
-# Cache directory for lyrics
+# Cache directory for fetched lyrics
 CACHE_DIR = Path(__file__).parent / ".lyrics_cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -83,9 +84,8 @@ WS_EX_LAYERED = 0x00080000
 WS_EX_TOPMOST = 0x00000008
 WS_EX_TRANSPARENT = 0x00000020
 LWA_COLORKEY = 0x00000001
-LWA_ALPHA = 0x00000002
 
-KEY_COLOR = (1, 1, 1)  # Chroma-key for desktop transparency
+KEY_COLOR = (1, 1, 1)  # Desktop Chroma-Key
 
 def setup_overlay_window(hwnd, click_through=False):
     """Configures the Pygame window as a transparent, always-on-top desktop overlay."""
@@ -107,10 +107,10 @@ def setup_overlay_window(hwnd, click_through=False):
     user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW)
 
 # -------------------------------------------------------------
-# Color Extraction & Cyber Palette Builder
+# Color Extraction & Dynamic Palette Generator
 # -------------------------------------------------------------
 def extract_palette_from_image(image_bytes):
-    """Extracts dominant, rich cyberpunk color palette from album artwork bytes."""
+    """Extracts dominant, harmonic color palette from album artwork bytes."""
     try:
         img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         img_small = img.resize((48, 48), Image.Resampling.LANCZOS)
@@ -124,8 +124,9 @@ def extract_palette_from_image(image_bytes):
         color_counts = {}
         for r, g, b in raw_pixels:
             h, s, v = colorsys.rgb_to_hsv(r / 255.0, g / 255.0, b / 255.0)
-            saturation_weight = 1.0 + (s * 4.0)
-            brightness_weight = 1.3 if (0.25 < v < 0.90) else 0.4
+            # Prioritize vibrant and well-lit colors
+            saturation_weight = 1.0 + (s * 3.5)
+            brightness_weight = 1.2 if (0.22 < v < 0.92) else 0.4
             bucket = ((r // 16) * 16, (g // 16) * 16, (b // 16) * 16)
             color_counts[bucket] = color_counts.get(bucket, 0) + (saturation_weight * brightness_weight)
 
@@ -135,32 +136,36 @@ def extract_palette_from_image(image_bytes):
         best_rgb = max(color_counts.items(), key=lambda item: item[1])[0]
         h, s, v = colorsys.rgb_to_hsv(best_rgb[0] / 255.0, best_rgb[1] / 255.0, best_rgb[2] / 255.0)
 
-        # 1. Neon Accent
-        acc_s = max(s, 0.78)
-        acc_v = max(v, 0.92)
+        # 1. Vibrant Accent Color (for notes, highlights, and pill notch)
+        acc_s = max(s, 0.72)
+        acc_v = max(v, 0.88)
         acc_rgb = tuple(int(c * 255) for c in colorsys.hsv_to_rgb(h, acc_s, acc_v))
 
-        # 2. Terminal Card Surface
-        card_s = min(max(s, 0.45), 0.70)
-        card_v = 0.16 if s > 0.15 else 0.11
+        # 2. Rich Dark Frosted Card Surface
+        card_s = min(max(s, 0.40), 0.65)
+        card_v = 0.17 if s > 0.15 else 0.12
         card_rgb = tuple(int(c * 255) for c in colorsys.hsv_to_rgb(h, card_s, card_v))
 
-        # 3. Glowing Cyber Border
-        border_s = min(s, 0.75)
-        border_v = min(card_v + 0.35, 0.75)
+        # 3. Soft Elegant Glass Border
+        border_s = min(s, 0.65)
+        border_v = min(card_v + 0.32, 0.70)
         border_rgb = tuple(int(c * 255) for c in colorsys.hsv_to_rgb(h, border_s, border_v))
 
-        bg_rgb = tuple(max(0, c - 18) for c in card_rgb)
+        # 4. Muted Subtitle / Timestamp Text
+        sub_s = min(s * 0.3, 0.25)
+        sub_v = 0.75
+        sub_rgb = tuple(int(c * 255) for c in colorsys.hsv_to_rgb(h, sub_s, sub_v))
+
+        bg_rgb = tuple(max(0, c - 15) for c in card_rgb)
 
         return {
             "bg": bg_rgb,
             "card": card_rgb,
-            "text": (245, 248, 252),
+            "text": (252, 253, 255),
             "accent": acc_rgb,
             "glass_border": border_rgb,
-            "shadow_outer": (4, 5, 8),
-            "shadow_inner": (15, 18, 25),
-            "edge_light": border_rgb
+            "shadow_outer": (10, 8, 12),
+            "sub_text": sub_rgb
         }
     except Exception:
         return DEFAULT_THEME_RGB
@@ -190,7 +195,7 @@ def parse_lrc(lrc_text):
     return entries
 
 def fetch_lyrics_lrclib(title, artist, album=""):
-    """Fetches synchronized lyrics from LRCLIB with local caching."""
+    """Fetches synchronized lyrics from LRCLIB with local file caching."""
     safe_name = clean_filename(f"{artist} - {title}")
     cache_path = CACHE_DIR / f"{safe_name}.json"
     
@@ -254,7 +259,7 @@ def fetch_itunes_artwork(title, artist):
     return None
 
 # -------------------------------------------------------------
-# Spotify Playback Monitor (Zero-Delay Precision Sync)
+# Spotify Playback Monitor (Hardware Precision Extrapolation)
 # -------------------------------------------------------------
 class SpotifyMonitor:
     def __init__(self, state_queue):
@@ -297,7 +302,7 @@ class SpotifyMonitor:
             status = pb_info.playback_status if pb_info else 0
             is_playing = (status == 4)
 
-            # Precision Timeline Calculation
+            # Precision Timeline Extrapolation (Eliminating 2-3s GSMTC caching latency)
             timeline = session.get_timeline_properties()
             if timeline and timeline.position:
                 raw_pos = timeline.position.total_seconds()
@@ -365,7 +370,7 @@ class SpotifyMonitor:
 
     def worker_loop(self):
         """Background thread monitoring Spotify state continuously."""
-        print("[SYS.DAEMON] Spotify worker loop active", flush=True)
+        print("[SpotifyMonitor] Active and listening for Spotify playback...", flush=True)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
@@ -404,7 +409,7 @@ class SpotifyMonitor:
                 if track_changed and title:
                     self.last_track = title
                     self.last_artist = artist
-                    print(f"[SYS.DAEMON] Track Changed: {title} - {artist}", flush=True)
+                    print(f"[Spotify] Now Playing: {title} — {artist}", flush=True)
 
                     if not thumb_bytes:
                         thumb_bytes = fetch_itunes_artwork(title, artist)
@@ -447,106 +452,86 @@ class SpotifyMonitor:
         return t
 
 # -------------------------------------------------------------
-# Cyber Matrix & Music Notes Falling Particle System
+# Aesthetic Falling Musical Notes Particle System
 # -------------------------------------------------------------
-class CyberParticle:
-    """Hacker-style matrix particle combining musical notes and digital hex streams."""
-    GLYPHS = ["♪", "♫", "♬", "♩", "01", "10", "0x", "λ", "§", "ø", "::", "[#]", ">>", "4F", "A2", "FF", "00"]
+class FallingNoteParticle:
+    """Aesthetic musical notes drifting gently downwards in matching album colors."""
+    NOTES = ["♪", "♫", "♬", "♩"]
 
     def __init__(self, screen_w, screen_h, initial_scatter=False):
         self.screen_w = screen_w
         self.screen_h = screen_h
-        self.glyph = random.choice(self.GLYPHS)
-        self.size = random.randint(14, 28)
+        self.note = random.choice(self.NOTES)
+        self.size = random.randint(16, 28)
         self.x = random.uniform(20, screen_w - 20)
         self.base_x = self.x
-        self.y = random.uniform(0, screen_h) if initial_scatter else random.uniform(-60, -10)
-        self.speed_y = random.uniform(1.8, 3.8) * SPEED_MULTIPLIER
-        self.sway_amp = random.uniform(6, 20)
-        self.sway_freq = random.uniform(1.2, 2.5)
+        self.y = random.uniform(0, screen_h) if initial_scatter else random.uniform(-50, -10)
+        self.speed_y = random.uniform(1.2, 2.6) * SPEED_MULTIPLIER
+        self.sway_amp = random.uniform(10, 26)
+        self.sway_freq = random.uniform(0.9, 1.8)
         self.phase = random.uniform(0, math.pi * 2)
-        self.alpha = random.randint(80, 210)
-        self.is_lead = (random.random() < 0.20)
-        self.flicker_cd = random.uniform(0.15, 0.45)
+        self.alpha = random.randint(90, 200)
 
     def update(self, dt, current_time):
         self.y += self.speed_y * dt * 60.0
         self.x = self.base_x + math.sin(current_time * self.sway_freq + self.phase) * self.sway_amp
-        
-        self.flicker_cd -= dt
-        if self.flicker_cd <= 0:
-            self.glyph = random.choice(self.GLYPHS)
-            self.flicker_cd = random.uniform(0.15, 0.5)
 
         if self.y > self.screen_h + 30:
             self.reset()
 
     def reset(self):
-        self.glyph = random.choice(self.GLYPHS)
-        self.size = random.randint(14, 28)
+        self.note = random.choice(self.NOTES)
+        self.size = random.randint(16, 28)
         self.base_x = random.uniform(20, self.screen_w - 20)
         self.x = self.base_x
-        self.y = random.uniform(-50, -10)
-        self.speed_y = random.uniform(1.8, 3.8) * SPEED_MULTIPLIER
-        self.sway_amp = random.uniform(6, 20)
+        self.y = random.uniform(-40, -10)
+        self.speed_y = random.uniform(1.2, 2.6) * SPEED_MULTIPLIER
+        self.sway_amp = random.uniform(10, 26)
         self.phase = random.uniform(0, math.pi * 2)
-        self.alpha = random.randint(80, 210)
-        self.is_lead = (random.random() < 0.20)
+        self.alpha = random.randint(90, 200)
 
 # -------------------------------------------------------------
-# Individual Rising Hacker HUD Card (Separate Card for each lyric)
+# Individual Rising Aesthetic Card (One Card Per Lyric Line)
 # -------------------------------------------------------------
-class RisingHackerCard:
+class RisingAestheticCard:
     """
-    Each lyric line spawns in its own separate tactical HUD card that floats
-    gently upwards while swaying left and right ('naik satu-satu ke atas, kiri-kanan goyang dikit').
+    Frosted glass rounded card that rises gracefully upwards while swaying
+    gently left and right, with serif quotes, pill notch, and album thumbnail.
     """
-    def __init__(self, text, start_x, start_y, palette, time_tag, cover_surface=None, fonts=None, track_info=""):
+    def __init__(self, text, start_x, start_y, palette, time_tag, cover_surface=None, fonts=None, title="", artist=""):
         self.text = text.strip().strip('"').strip("'")
         self.card_w = 480
-        self.card_h = 210
+        self.card_h = 195
         self.base_x = start_x
         self.x = start_x
         self.y = start_y
         
-        # Gentle upward rising speed
-        self.speed_y = random.uniform(1.2, 1.6) * BASE_FLOAT_SPEED
-        # Left-right swaying physics
-        self.sway_amp = random.uniform(20.0, 38.0)
-        self.sway_freq = random.uniform(1.1, 1.5)
+        # Smooth upward floating speed
+        self.speed_y = random.uniform(1.25, 1.55) * BASE_FLOAT_SPEED
+        # Left-right swaying physics ('kiri-kanan goyang dikit')
+        self.sway_amp = random.uniform(22.0, 36.0)
+        self.sway_freq = random.uniform(0.95, 1.35)
         self.phase = random.uniform(0, math.pi * 2)
         
         self.palette = dict(palette)
         self.time_tag = time_tag
-        self.pid = f"0x{random.randint(0x40, 0x9F):02X}"
         self.cover_surface = cover_surface
         self.fonts = fonts
-        self.track_info = track_info
+        self.title = title
+        self.artist = artist
         
         self.alpha = 255.0
         self.spawn_time = time.time()
         self.is_alive = True
 
-        # Rapid hacker decryption effect
-        self.decrypt_progress = 0.0
-        self.decrypt_speed = 10.0
-
-        # Mini Equalizer spectrum values
-        self.num_bars = 28
-        self.eq_values = [random.uniform(3, 14) for _ in range(self.num_bars)]
-
     def update(self, dt, current_time, screen_h):
         # 1. Rise upwards
         self.y -= self.speed_y * dt * 60.0
         
-        # 2. Sway slightly left and right
+        # 2. Sway gently left and right
         self.x = self.base_x + math.sin(current_time * self.sway_freq + self.phase) * self.sway_amp
 
-        # 3. Fast decryption unscramble
-        if self.decrypt_progress < 1.0:
-            self.decrypt_progress = min(1.0, self.decrypt_progress + (dt * self.decrypt_speed))
-
-        # 4. Smooth fade out as it floats past the upper third of screen
+        # 3. Smooth fade out as it reaches the upper half of screen
         fade_start_y = screen_h * 0.45
         if self.y < fade_start_y:
             fade_ratio = max(0.0, (self.y + self.card_h * 0.5) / (fade_start_y + self.card_h * 0.5))
@@ -557,78 +542,41 @@ class RisingHackerCard:
         if self.y < -self.card_h or self.alpha <= 2:
             self.is_alive = False
 
-        # Update mini equalizer bars
-        t = time.time()
-        for i in range(self.num_bars):
-            target_h = 3 + (math.sin(t * 8.0 + i * 0.5 + self.base_x * 0.01) * 6.0) + random.uniform(0, 3)
-            self.eq_values[i] += (target_h - self.eq_values[i]) * min(1.0, dt * 14.0)
-
-    def get_decrypted_text(self):
-        """Hacker typewriter/decryption effect: reveals words with rapid cycling hex glyphs."""
-        if self.decrypt_progress >= 1.0:
-            return self.text
-        revealed_len = int(len(self.text) * self.decrypt_progress)
-        revealed = self.text[:revealed_len]
-        unrevealed_len = len(self.text) - revealed_len
-        scramble_chars = "0101#@$%&*~+=<>0x"
-        scramble = "".join(random.choice(scramble_chars) for _ in range(unrevealed_len))
-        return revealed + scramble
-
-    def render(self, scanlines_enabled=True):
-        """Renders the tactical cyberpunk HUD card."""
+    def render(self):
+        """Renders the aesthetic frosted glass card."""
         surf = pygame.Surface((self.card_w, self.card_h), pygame.SRCALPHA)
         
         card_col = self.palette["card"]
         border_col = self.palette["glass_border"]
         accent_col = self.palette["accent"]
         text_col = self.palette["text"]
+        sub_col = self.palette["sub_text"]
 
         alpha_int = int(self.alpha)
-        bg_rgba = (card_col[0], card_col[1], card_col[2], min(242, int(alpha_int * 0.95)))
-        border_rgba = (accent_col[0], accent_col[1], accent_col[2], min(220, int(alpha_int * 0.88)))
+        
+        # 1. Main Frosted Rounded Card Surface
+        bg_rgba = (card_col[0], card_col[1], card_col[2], min(238, int(alpha_int * 0.94)))
+        border_rgba = (border_col[0], border_col[1], border_col[2], min(200, int(alpha_int * 0.85)))
+        accent_border = (accent_col[0], accent_col[1], accent_col[2], min(140, int(alpha_int * 0.60)))
 
-        # 1. Main Tactical Rounded Surface
-        pygame.draw.rect(surf, bg_rgba, (0, 0, self.card_w, self.card_h), border_radius=12)
-        pygame.draw.rect(surf, border_rgba, (0, 0, self.card_w, self.card_h), width=2, border_radius=12)
+        pygame.draw.rect(surf, bg_rgba, (0, 0, self.card_w, self.card_h), border_radius=24)
+        pygame.draw.rect(surf, border_rgba, (0, 0, self.card_w, self.card_h), width=2, border_radius=24)
+        pygame.draw.rect(surf, accent_border, (2, 2, self.card_w - 4, self.card_h - 4), width=1, border_radius=22)
 
-        # 2. Tactical Corner Tick Crosshairs
-        t_len = 14
-        tick_rgba = (255, 255, 255, min(240, alpha_int))
-        pygame.draw.line(surf, tick_rgba, (3, 3), (3 + t_len, 3), 2)
-        pygame.draw.line(surf, tick_rgba, (3, 3), (3, 3 + t_len), 2)
-        pygame.draw.line(surf, tick_rgba, (self.card_w - 4, 3), (self.card_w - 4 - t_len, 3), 2)
-        pygame.draw.line(surf, tick_rgba, (self.card_w - 4, 3), (self.card_w - 4, 3 + t_len), 2)
-        pygame.draw.line(surf, tick_rgba, (3, self.card_h - 4), (3 + t_len, self.card_h - 4), 2)
-        pygame.draw.line(surf, tick_rgba, (3, self.card_h - 4), (3, self.card_h - 4 - t_len), 2)
-        pygame.draw.line(surf, tick_rgba, (self.card_w - 4, self.card_h - 4), (self.card_w - 4 - t_len, self.card_h - 4), 2)
-        pygame.draw.line(surf, tick_rgba, (self.card_w - 4, self.card_h - 4), (self.card_w - 4, self.card_h - 4 - t_len), 2)
+        # 2. Sleek Top Pill Notch (Dynamic Island Aesthetic)
+        notch_w = 80
+        notch_h = 7
+        notch_x = (self.card_w - notch_w) // 2
+        notch_y = 13
+        notch_rgba = (accent_col[0], accent_col[1], accent_col[2], min(220, int(alpha_int * 0.85)))
+        pygame.draw.rect(surf, notch_rgba, (notch_x, notch_y, notch_w, notch_h), border_radius=4)
 
-        # 3. Top Cyber Terminal Header Bar
-        dot_rgba = (accent_col[0], accent_col[1], accent_col[2], alpha_int)
-        pygame.draw.circle(surf, dot_rgba, (18, 15), 4)
+        # 3. Clean Serif Lyric Text with Quotes ("...")
+        quote_text = f'"{self.text}"'
+        max_text_w = self.card_w - 70
 
-        header_str = f"[LRC.DECODE // PID:{self.pid}]  {self.time_tag}  [SYNC_ACTIVE]"
-        h_surf = self.fonts["header"].render(header_str, True, accent_col)
-        h_surf.set_alpha(alpha_int)
-        surf.blit(h_surf, (28, 9))
-
-        pygame.draw.line(surf, (border_col[0], border_col[1], border_col[2], min(130, alpha_int)), (12, 25), (self.card_w - 12, 25), 1)
-
-        # 4. Subtle Scanline Overlay
-        if scanlines_enabled:
-            for sl_y in range(27, self.card_h - 36, 6):
-                pygame.draw.line(surf, (0, 0, 0, min(28, int(alpha_int * 0.22))), (4, sl_y), (self.card_w - 4, sl_y), 1)
-
-        # 5. Monospace prompt "> " + Decrypted Lyric Text
-        prompt = self.fonts["lyric"].render("> ", True, accent_col)
-        prompt.set_alpha(alpha_int)
-        surf.blit(prompt, (20, 64))
-
-        display_text = self.get_decrypted_text()
-        display_text = f'"{display_text}"' if not display_text.startswith("♪") else display_text
-
-        max_text_w = self.card_w - 65
-        words = display_text.split()
+        # Word wrap text
+        words = quote_text.split()
         lines = []
         curr_l = ""
         for w in words:
@@ -642,52 +590,52 @@ class RisingHackerCard:
         if curr_l:
             lines.append(curr_l)
 
-        start_y = 64
-        line_h = 26
+        # Vertically and horizontally center lyrics in the card body
+        line_h = 30
+        total_text_h = len(lines) * line_h
+        body_top = 28
+        body_bottom = self.card_h - 42
+        available_h = body_bottom - body_top
+        start_y = body_top + max(6, (available_h - total_text_h) // 2)
+
         for i, line in enumerate(lines):
             ls = self.fonts["lyric"].render(line, True, text_col)
             ls.set_alpha(alpha_int)
-            surf.blit(ls, (48, start_y + (i * line_h)))
+            line_x = (self.card_w - ls.get_width()) // 2
+            surf.blit(ls, (line_x, start_y + (i * line_h)))
 
-        # Terminal Blinking Cursor (only on newest active cards)
-        if self.alpha > 200:
-            last_line = lines[-1] if lines else ""
-            cur_x = 48 + self.fonts["lyric"].size(last_line)[0] + 4
-            cur_y = start_y + ((len(lines) - 1) * line_h)
-            cursor_blink = int((time.time() * 2.5) % 2)
-            if cursor_blink == 0 and cur_x < self.card_w - 18:
-                c_surf = self.fonts["lyric"].render("█", True, accent_col)
-                c_surf.set_alpha(alpha_int)
-                surf.blit(c_surf, (cur_x, cur_y))
+        # 4. Bottom Divider Line
+        divider_y = self.card_h - 38
+        div_rgba = (border_col[0], border_col[1], border_col[2], min(110, int(alpha_int * 0.45)))
+        pygame.draw.line(surf, div_rgba, (24, divider_y), (self.card_w - 24, divider_y), 1)
 
-        # 6. Mini Audio Equalizer Spectrum Bars on each rising card
-        eq_y = self.card_h - 44
-        b_w = 6
-        b_gap = 4
-        for bi in range(self.num_bars):
-            h = int(self.eq_values[bi])
-            bx = 20 + bi * (b_w + b_gap)
-            bar_rgba = (accent_col[0], accent_col[1], accent_col[2], min(180, int(alpha_int * 0.75)))
-            pygame.draw.rect(surf, bar_rgba, (bx, eq_y - h, b_w, h), border_radius=1)
-            pygame.draw.rect(surf, (255, 255, 255, min(230, alpha_int)), (bx, eq_y - h - 2, b_w, 2))
+        # 5. Bottom Left: Mini Album Artwork + Track & Artist
+        thumb_size = 22
+        thumb_x = 24
+        thumb_y = self.card_h - 29
 
-        pygame.draw.line(surf, (border_col[0], border_col[1], border_col[2], min(130, alpha_int)), (12, self.card_h - 32), (self.card_w - 12, self.card_h - 32), 1)
-
-        # 7. Bottom Telemetry Bar: Album Thumbnail + Metadata
-        thumb_x = 18
-        thumb_y = self.card_h - 26
         if self.cover_surface:
-            surf.blit(self.cover_surface, (thumb_x, thumb_y - 2))
-            pygame.draw.rect(surf, border_rgba, (thumb_x, thumb_y - 2, 22, 22), width=1, border_radius=2)
-            text_x = thumb_x + 28
+            surf.blit(self.cover_surface, (thumb_x, thumb_y))
+            pygame.draw.rect(surf, border_rgba, (thumb_x, thumb_y, thumb_size, thumb_size), width=1, border_radius=4)
+            info_x = thumb_x + thumb_size + 10
         else:
-            pygame.draw.rect(surf, accent_col, (thumb_x, thumb_y + 2, 12, 12), border_radius=2)
-            text_x = thumb_x + 20
+            pygame.draw.rect(surf, accent_col, (thumb_x, thumb_y + 3, 14, 14), border_radius=4)
+            info_x = thumb_x + 22
 
-        info_str = self.track_info if self.track_info else f"LRC.STREAM // HEX: {rgb_to_hex(accent_col)}"
-        info_surf = self.fonts["sub"].render(info_str, True, (180, 190, 205))
-        info_surf.set_alpha(min(180, alpha_int))
-        surf.blit(info_surf, (text_x, thumb_y + 2))
+        track_str = f"{self.title}  ·  {self.artist}" if self.title else "Spotify Playing"
+        if len(track_str) > 36:
+            track_str = track_str[:34] + "…"
+
+        info_surf = self.fonts["sub"].render(track_str, True, sub_col)
+        info_surf.set_alpha(min(210, alpha_int))
+        surf.blit(info_surf, (info_x, thumb_y + 3))
+
+        # 6. Bottom Right: Clean Timestamp [mm:ss]
+        if self.time_tag:
+            time_surf = self.fonts["sub"].render(self.time_tag, True, sub_col)
+            time_surf.set_alpha(min(200, alpha_int))
+            time_x = self.card_w - 24 - time_surf.get_width()
+            surf.blit(time_surf, (time_x, thumb_y + 3))
 
         return surf
 
@@ -700,7 +648,7 @@ class FloatingLyricsApp:
         self.screen_w = info.current_w
         self.screen_h = info.current_h
         self.screen = pygame.display.set_mode((self.screen_w, self.screen_h), pygame.NOFRAME)
-        pygame.display.set_caption("Spotify Rising Hacker Lyrics Overlay")
+        pygame.display.set_caption("Spotify Aesthetic Floating Lyrics Overlay")
         
         self.hwnd = pygame.display.get_wm_info()["window"]
         self.click_through = False
@@ -714,8 +662,8 @@ class FloatingLyricsApp:
         self.monitor.start()
 
         # Track & Lyrics State
-        self.current_title = "INITIALIZING DAEMON..."
-        self.current_artist = "WAITING FOR SPOTIFY STREAM"
+        self.current_title = "Waiting for Spotify..."
+        self.current_artist = ""
         self.current_album = ""
         self.lyrics_entries = []
         self.plain_lyrics = ""
@@ -728,30 +676,27 @@ class FloatingLyricsApp:
         # Precision Sync Offset (in seconds)
         self.sync_offset = DEFAULT_SYNC_OFFSET
 
-        # Separate Rising Hacker Cards List
+        # Rising Aesthetic Cards List
         self.cards = []
         self.last_spawned_lyric = ""
 
-        # Color Palettes & Smooth Transition (Lerp)
+        # Color Palettes & Smooth Transition
         self.current_theme = dict(DEFAULT_THEME_RGB)
         self.target_theme = dict(DEFAULT_THEME_RGB)
         self.cover_surface = None
 
-        # Fonts (Monospace Hacker Fonts)
+        # Clean Elegant Fonts
         self.fonts = {
-            "header": pygame.font.SysFont("consolas", 11, bold=True),
-            "lyric": pygame.font.SysFont("consolas", 20, bold=True),
-            "sub": pygame.font.SysFont("consolas", 10),
-            "symbols": pygame.font.SysFont("consolas", 18, bold=True),
+            "lyric": pygame.font.SysFont("georgia", 21, bold=True),
+            "sub": pygame.font.SysFont("segoeui", 11),
             "music": pygame.font.SysFont("segoeuisymbol", 22)
         }
 
-        # Falling Matrix & Notes Particles
-        self.particles = [CyberParticle(self.screen_w, self.screen_h, initial_scatter=True) for _ in range(50)]
+        # Falling Musical Note Particles
+        self.particles = [FallingNoteParticle(self.screen_w, self.screen_h, initial_scatter=True) for _ in range(35)]
         self.falling_notes_enabled = True
-        self.scanlines_enabled = True
 
-        # Global Hotkey tracking
+        # Global Hotkey debounce
         self.last_key_press_time = 0.0
 
     def lerp_color(self, c1, c2, t):
@@ -765,10 +710,11 @@ class FloatingLyricsApp:
     def update_palette_lerp(self, dt):
         """Smoothly blends current card colors toward target album cover colors."""
         blend_factor = min(1.0, dt * 3.5)
-        for key in ["card", "accent", "glass_border", "bg", "edge_light"]:
-            self.current_theme[key] = self.lerp_color(
-                self.current_theme[key], self.target_theme[key], blend_factor
-            )
+        for key in ["card", "accent", "glass_border", "bg", "sub_text"]:
+            if key in self.current_theme and key in self.target_theme:
+                self.current_theme[key] = self.lerp_color(
+                    self.current_theme[key], self.target_theme[key], blend_factor
+                )
 
     def process_queue_events(self):
         """Processes state updates from the background Spotify monitor."""
@@ -777,9 +723,9 @@ class FloatingLyricsApp:
                 msg = self.state_queue.get_nowait()
                 msg_type = msg.get("type")
                 if msg_type == "track_change":
-                    self.current_title = msg["title"].upper()
-                    self.current_artist = msg["artist"].upper()
-                    self.current_album = msg.get("album", "").upper()
+                    self.current_title = msg["title"]
+                    self.current_artist = msg["artist"]
+                    self.current_album = msg.get("album", "")
                     self.total_duration = msg.get("duration", 0.0)
                     self.lyrics_entries = msg["lyrics"]
                     self.plain_lyrics = msg["plain"]
@@ -822,16 +768,16 @@ class FloatingLyricsApp:
 
     def update_lyrics_and_spawn_cards(self):
         """
-        Detects active lyric line and spawns a new separate rising hacker card
-        that starts from the bottom and floats upwards swaying left/right.
+        Detects active lyric line and spawns a new separate rising aesthetic card
+        that starts from the bottom and floats upwards while swaying left/right.
         """
         if not self.karaoke_mode:
-            current_line = f"{self.current_title} // {self.current_artist}"
+            current_line = f"{self.current_title} · {self.current_artist}"
         elif not self.lyrics_entries:
-            if self.current_title != "INITIALIZING DAEMON...":
-                current_line = f">> AUDIO STREAM: {self.current_title}"
+            if self.current_title != "Waiting for Spotify...":
+                current_line = f"♫ {self.current_title}"
             else:
-                current_line = "WAITING FOR SPOTIFY STREAM..."
+                current_line = "Play a song on Spotify..."
         else:
             curr_time = self.get_interpolated_playback_time()
             found = None
@@ -840,31 +786,27 @@ class FloatingLyricsApp:
                     found = txt
                 else:
                     break
-            current_line = found if found else f">> INTRO // {self.current_title}"
+            current_line = found if found else f"♫ {self.current_title}"
 
         # When a new lyric line begins, spawn a new separate card at the bottom!
         if current_line and current_line != self.last_spawned_lyric:
             self.last_spawned_lyric = current_line
             
             card_w = 480
-            card_h = 210
+            card_h = 195
             center_x = (self.screen_w // 2 - card_w // 2)
-            spawn_x = center_x + random.uniform(-140, 140)
+            # Subtle random horizontal spawn displacement
+            spawn_x = center_x + random.uniform(-110, 110)
             spawn_x = max(30, min(self.screen_w - card_w - 30, spawn_x))
-            spawn_y = float(self.screen_h - card_h - 40)
+            spawn_y = float(self.screen_h - card_h - 50)
 
             # Format current timestamp tag [mm:ss]
             curr_t = self.get_interpolated_playback_time()
             mins = int(curr_t // 60)
             secs = int(curr_t % 60)
-            time_tag = f"[{mins:02d}:{secs:02d}]"
+            time_tag = f"{mins:02d}:{secs:02d}"
 
-            sub_title = self.current_title[:18] + ("..." if len(self.current_title) > 18 else "")
-            sub_artist = self.current_artist[:14] + ("..." if len(self.current_artist) > 14 else "")
-            hex_str = rgb_to_hex(self.current_theme["accent"])
-            track_info = f"{sub_artist} // {sub_title} // {hex_str}"
-
-            new_card = RisingHackerCard(
+            new_card = RisingAestheticCard(
                 text=current_line,
                 start_x=spawn_x,
                 start_y=spawn_y,
@@ -872,12 +814,13 @@ class FloatingLyricsApp:
                 time_tag=time_tag,
                 cover_surface=self.cover_surface,
                 fonts=self.fonts,
-                track_info=track_info
+                title=self.current_title,
+                artist=self.current_artist
             )
             self.cards.append(new_card)
 
     def update_cards_physics(self, dt):
-        """Updates physics for all active rising hacker cards."""
+        """Updates physics for all active rising cards."""
         curr_t = time.time()
         for card in self.cards:
             card.update(dt, curr_t, self.screen_h)
@@ -886,38 +829,27 @@ class FloatingLyricsApp:
         self.cards = [c for c in self.cards if c.is_alive]
 
     def draw(self):
-        """Draws transparent background, falling cyber matrix notes, and rising hacker cards."""
+        """Draws transparent background, falling musical notes, and rising aesthetic cards."""
         self.screen.fill(KEY_COLOR)
 
         accent_col = self.current_theme["accent"]
 
-        # 1. Render Falling Cyber Matrix Notes in background
+        # 1. Render Falling Musical Notes
         if self.falling_notes_enabled:
             for p in self.particles:
-                if p.is_lead:
-                    draw_col = (255, 255, 255)
-                    alpha_val = min(255, p.alpha + 25)
-                else:
-                    draw_col = accent_col
-                    alpha_val = p.alpha
-
-                if p.glyph in ("♪", "♫", "♬", "♩"):
-                    p_surf = self.fonts["music"].render(p.glyph, True, draw_col)
-                else:
-                    p_surf = self.fonts["symbols"].render(p.glyph, True, draw_col)
-
-                p_surf.set_alpha(alpha_val)
+                p_surf = self.fonts["music"].render(p.note, True, accent_col)
+                p_surf.set_alpha(p.alpha)
                 self.screen.blit(p_surf, (int(p.x), int(p.y)))
 
-        # 2. Render All Separate Rising Hacker Cards (floating upwards, swaying left/right)
+        # 2. Render All Separate Rising Aesthetic Cards
         for card in self.cards:
-            card_surf = card.render(scanlines_enabled=self.scanlines_enabled)
+            card_surf = card.render()
             self.screen.blit(card_surf, (int(card.x), int(card.y)))
 
         pygame.display.flip()
 
     def check_global_hotkeys(self):
-        """Allows hotkey control even when another window (like VS Code) is focused."""
+        """Allows hotkey control even when another application is focused."""
         now = time.time()
         if now - self.last_key_press_time < 0.25:
             return
@@ -931,34 +863,29 @@ class FloatingLyricsApp:
             if (user32.GetAsyncKeyState(ord('K')) & 0x8000) != 0:
                 self.last_key_press_time = now
                 self.karaoke_mode = not self.karaoke_mode
-                print(f"[UI] Karaoke Mode: {'ON' if self.karaoke_mode else 'OFF'}", flush=True)
+                print(f"[Overlay] Lyrics Display: {'ON' if self.karaoke_mode else 'OFF'}", flush=True)
 
             elif (user32.GetAsyncKeyState(ord('T')) & 0x8000) != 0:
                 self.last_key_press_time = now
                 self.click_through = not self.click_through
                 setup_overlay_window(self.hwnd, click_through=self.click_through)
                 mode_str = "Click-Through (Transparent)" if self.click_through else "Interactive"
-                print(f"[UI] Overlay Mode: {mode_str}", flush=True)
+                print(f"[Overlay] Mode: {mode_str}", flush=True)
 
             elif (user32.GetAsyncKeyState(ord('F')) & 0x8000) != 0:
                 self.last_key_press_time = now
                 self.falling_notes_enabled = not self.falling_notes_enabled
-                print(f"[UI] Falling Matrix: {'ON' if self.falling_notes_enabled else 'OFF'}", flush=True)
-
-            elif (user32.GetAsyncKeyState(ord('G')) & 0x8000) != 0:
-                self.last_key_press_time = now
-                self.scanlines_enabled = not self.scanlines_enabled
-                print(f"[UI] CRT Scanlines: {'ON' if self.scanlines_enabled else 'OFF'}", flush=True)
+                print(f"[Overlay] Falling Notes: {'ON' if self.falling_notes_enabled else 'OFF'}", flush=True)
 
             elif (user32.GetAsyncKeyState(0x26) & 0x8000) != 0:
                 self.last_key_press_time = now
                 self.sync_offset += 0.10
-                print(f"[SYNC] Manual Offset: {self.sync_offset:+.2f}s (Earlier)", flush=True)
+                print(f"[Sync] Calibration Offset: {self.sync_offset:+.2f}s (Earlier)", flush=True)
 
             elif (user32.GetAsyncKeyState(0x28) & 0x8000) != 0:
                 self.last_key_press_time = now
                 self.sync_offset -= 0.10
-                print(f"[SYNC] Manual Offset: {self.sync_offset:+.2f}s (Later)", flush=True)
+                print(f"[Sync] Calibration Offset: {self.sync_offset:+.2f}s (Later)", flush=True)
 
     def handle_events(self):
         """Handles Pygame window events."""
@@ -975,35 +902,31 @@ class FloatingLyricsApp:
                 elif event.key == pygame.K_k:
                     self.karaoke_mode = not self.karaoke_mode
                     status_str = "ON" if self.karaoke_mode else "OFF"
-                    print(f"[UI] Karaoke Mode: {status_str}", flush=True)
+                    print(f"[Overlay] Lyrics Display: {status_str}", flush=True)
 
                 elif event.key == pygame.K_t:
                     self.click_through = not self.click_through
                     setup_overlay_window(self.hwnd, click_through=self.click_through)
                     mode_str = "Click-Through (Transparent)" if self.click_through else "Interactive"
-                    print(f"[UI] Overlay Mode: {mode_str}", flush=True)
+                    print(f"[Overlay] Mode: {mode_str}", flush=True)
 
                 elif event.key == pygame.K_f:
                     self.falling_notes_enabled = not self.falling_notes_enabled
-                    print(f"[UI] Falling Matrix: {'ON' if self.falling_notes_enabled else 'OFF'}", flush=True)
-
-                elif event.key == pygame.K_g:
-                    self.scanlines_enabled = not self.scanlines_enabled
-                    print(f"[UI] CRT Scanlines: {'ON' if self.scanlines_enabled else 'OFF'}", flush=True)
+                    print(f"[Overlay] Falling Notes: {'ON' if self.falling_notes_enabled else 'OFF'}", flush=True)
 
                 # Up Arrow / ] : Advance lyrics earlier
                 elif event.key in (pygame.K_UP, pygame.K_RIGHTBRACKET):
                     self.sync_offset += 0.10
-                    print(f"[SYNC] Manual Offset: {self.sync_offset:+.2f}s (Earlier)", flush=True)
+                    print(f"[Sync] Calibration Offset: {self.sync_offset:+.2f}s (Earlier)", flush=True)
 
                 # Down Arrow / [ : Delay lyrics later
                 elif event.key in (pygame.K_DOWN, pygame.K_LEFTBRACKET):
                     self.sync_offset -= 0.10
-                    print(f"[SYNC] Manual Offset: {self.sync_offset:+.2f}s (Later)", flush=True)
+                    print(f"[Sync] Calibration Offset: {self.sync_offset:+.2f}s (Later)", flush=True)
 
                 elif event.key == pygame.K_0:
                     self.sync_offset = DEFAULT_SYNC_OFFSET
-                    print(f"[SYNC] Manual Offset Reset: {self.sync_offset:+.2f}s", flush=True)
+                    print(f"[Sync] Calibration Reset: {self.sync_offset:+.2f}s", flush=True)
 
                 elif event.key == pygame.K_SPACE:
                     VK_MEDIA_PLAY_PAUSE = 0xB3
@@ -1021,22 +944,21 @@ class FloatingLyricsApp:
                     user32.keybd_event(VK_MEDIA_PREV_TRACK, 0, 2, 0)
 
     def run(self):
-        """Main loop at 60 FPS."""
+        """Main loop running at 60 FPS."""
         print("==================================================", flush=True)
-        print("  SPOTIFY RISING HACKER HUD OVERLAY // v4.0", flush=True)
-        print("  Separate Rising Terminal Cards & Matrix Rain", flush=True)
-        print("  Hotkeys:", flush=True)
-        print("    [Up / ] ]             : Advance Lyrics Earlier (+0.10s)", flush=True)
-        print("    [Down / [ ]           : Delay Lyrics Later (-0.10s)", flush=True)
-        print("    [0]                   : Reset Sync Offset (+0.25s)", flush=True)
-        print("    [K] / [Ctrl+Shift+K]  : Toggle Karaoke Mode (ON / OFF)", flush=True)
-        print("    [T] / [Ctrl+Shift+T]  : Toggle Click-Through Mode", flush=True)
-        print("    [F] / [Ctrl+Shift+F]  : Toggle Falling Matrix / Notes", flush=True)
-        print("    [G] / [Ctrl+Shift+G]  : Toggle CRT Scanlines", flush=True)
+        print("  SPOTIFY AESTHETIC FLOATING LYRICS OVERLAY", flush=True)
+        print("  Clean frosted cards with dynamic album theming", flush=True)
+        print("  Shortcuts:", flush=True)
+        print("    [Up / ] ]             : Lyrics earlier (+0.10s)", flush=True)
+        print("    [Down / [ ]           : Lyrics later (-0.10s)", flush=True)
+        print("    [0]                   : Reset sync offset (+0.20s)", flush=True)
+        print("    [K] / [Ctrl+Shift+K]  : Toggle lyrics mode", flush=True)
+        print("    [T] / [Ctrl+Shift+T]  : Toggle click-through mode", flush=True)
+        print("    [F] / [Ctrl+Shift+F]  : Toggle falling notes", flush=True)
         print("    [Space]               : Play / Pause Spotify", flush=True)
-        print("    [N / ->]              : Next Song", flush=True)
-        print("    [P / <-]              : Previous Song", flush=True)
-        print("    [Q / Esc]             : Terminate Daemon", flush=True)
+        print("    [N / ->]              : Next song", flush=True)
+        print("    [P / <-]              : Previous song", flush=True)
+        print("    [Q / Esc]             : Exit overlay", flush=True)
         print("==================================================", flush=True)
 
         last_time = time.perf_counter()

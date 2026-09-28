@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🎵 Spotify Rising Hacker Lyrics Overlay
+# 🎵 Spotify Aesthetic Floating Lyrics Overlay
 
-### *Real-Time Floating Lyrics HUD with Dynamic Album Cover Color Adaptation*
+### *Real-Time Synced Lyrics Overlay with Dynamic Album Artwork Colors & Elegant Floating Cards*
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg?style=for-the-badge&logo=python)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
@@ -12,113 +12,120 @@
 
 <br/>
 
-<img src="assets/preview.png" alt="Spotify Rising Hacker Lyrics Overlay Preview" width="900" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+<img src="assets/preview.png" alt="Spotify Aesthetic Floating Lyrics Overlay Preview" width="900" style="border-radius: 16px; box-shadow: 0 12px 36px rgba(0,0,0,0.4);" />
 
 <br/>
 
-**A transparent, holographic tactical terminal overlay for Windows.**  
-When playing music on Spotify, each lyric line spawns in its own separate tactical HUD card that floats gently upwards while swaying left and right. In the background, digital matrix streams (`01`, `10`, `0x`, `λ`, `§`) and musical notes (`♪`, `♫`, `♬`, `♩`) rain down, while the neon glow and card colors dynamically adapt to the album cover artwork!
+**A clean, aesthetic desktop lyrics overlay designed for desktop recording and TikTok content creation.**  
+Whenever you play a track on Spotify, each lyric line appears in its own separate frosted glass card that gently floats upwards while swaying naturally side to side. Musical notes drift softly in the background, and all visual accents, borders, and glows dynamically adapt in real-time to the color palette of the current album artwork.
 
 </div>
 
 ---
 
-## ⚡ Why It Stands Out
+## ✨ Features at a Glance
 
-| Feature | Ordinary Lyrics Widgets | **Spotify Rising Hacker Overlay** |
+| Feature | Standard Lyrics Widgets | **Spotify Aesthetic Overlay** |
 |:---|:---:|:---:|
-| **Card Movement** | Static or Bouncing DVD | **Floating Upwards & Swaying Left/Right** 🎈 |
-| **Multi-Card Flow** | Only 1 line at a time | **Separate rising cards fading smoothly upwards** ✨ |
-| **Color Theming** | Hardcoded Dark / Light | **Dynamic color extraction from active album cover** 🎨 |
-| **Particle System** | None | **Digital Matrix Rain + Musical Glyphs** 🌧️ |
-| **Audio Equalizer** | None | **Integrated 28-Bar Spectrum Visualizer** 📊 |
-| **API Key Required**| Yes (Spotify Dev tokens) | **100% Zero API Keys Needed (Plug & Play)** 🔌 |
-| **Sync Precision** | Often 2–3s delayed | **Zero-Delay Hardware Timestamp Extrapolation** ⚡ |
-| **Desktop Overlay** | Standard Windowed | **100% Transparent Click-Through Overlay** 🖥️ |
+| **Card Animation** | Static box or bouncing text | **Individual floating cards with natural sway** 🎈 |
+| **Typography** | Generic monospace / sans | **High-legibility serif quotes & clean layouts** 🖋️ |
+| **Color Theming** | Fixed dark or white mode | **Adaptive color extraction from album artwork** 🎨 |
+| **Atmosphere Effect** | None | **Falling musical notes (`♪`, `♫`, `♬`, `♩`)** 🎵 |
+| **API Key Setup** | Requires Spotify Developer account | **100% Zero API Keys Needed (Plug & Play)** 🔌 |
+| **Sync Precision** | Often 2–3 seconds delayed | **Hardware timestamp extrapolation (Zero Delay)** ⚡ |
+| **Desktop Integration**| Clunky windowed frame | **Transparent click-through desktop overlay** 🖥️ |
+| **Content Creation** | Unsuitable for filming | **Optimized for TikTok & Reels screen recording** 📱 |
 
 ---
 
 ## 🌟 Core Highlights
 
-- **🎈 Rising Separate Cards**: Each lyric line is its own tactical terminal card that spawns at the bottom, rises gently upwards (`y -= speed`), and sways horizontally (`Δx = sin(...) * amp`), with older cards smoothly dissolving into the top.
-- **⚡ Zero-Delay Precision Sync**: Eliminates Windows GSMTC timeline caching delay using microsecond `time.perf_counter()` hardware compensation.
-- **🎨 Dynamic Album Cover Adaptation**: Quantizes colors from active album art to tint neon borders, equalizers, text accents, and matrix particles without sudden jarring color shifts (*smooth lerp crossfade*).
-- **🌧️ Digital Matrix Rain**: Combines hex streams, binary bytes, and musical notes falling gracefully in the background.
-- **⌨️ Live Calibration & Hotkeys**: Advance or delay lyrics live with `[` / `]` or arrow keys without restarting.
-- **🖥️ Click-Through Mode**: Press `T` to let mouse clicks pass directly through to VS Code, browsers, or games behind the overlay.
+- **🎈 Individual Rising Cards**: Each lyric line emerges as its own rounded frosted glass card at the bottom of the screen, floating upwards (`y -= speed`) with gentle horizontal sway (`Δx = sin(...) * amp`), before dissolving smoothly at the top.
+- **🎨 Dynamic Album Cover Harmony**: Automatically samples dominant colors from the current album art to tint card backgrounds, glowing borders, dynamic island notch, and falling notes with smooth linear interpolation (*lerp crossfade*).
+- **⚡ Zero-Delay Precision Synchronization**: Bypasses Windows GSMTC timeline lag through millisecond hardware timestamp extrapolation (`time.perf_counter()`), ensuring lyrics appear the instant the artist sings.
+- **🎵 Ambient Falling Notes**: Graceful musical symbols (`♪`, `♫`, `♬`, `♩`) drift down across your desktop matching the album's mood.
+- **📱 TikTok & Video Ready**: Designed specifically for clean screen recordings, aesthetic desktop captures, study/chill streams, and social media reels.
+- **🖥️ Transparent Click-Through Overlay**: Press `T` to toggle click-through mode, allowing mouse interactions to pass directly through the overlay to your workspace, IDE, or game.
+- **⌨️ Live Calibration**: Fine-tune lyric timing on the fly using `[` / `]` or arrow keys without ever restarting the app.
 
 ---
 
-## ⌨️ Controls & Hotkeys
+## ⌨️ Shortcuts & Hotkeys
 
-All hotkeys work both inside the application window and globally across Windows:
+All hotkeys function seamlessly inside the overlay and globally across Windows:
 
-| Hotkey | Global Shortcut | Action | Description |
+| Shortcut | Global Hotkey | Action | Description |
 |:---|:---|:---|:---|
-| `↑` / `]` | `Ctrl+Shift+↑` | **Advance Lyrics (+0.10s)** | Calibrate lyrics to appear earlier if audio leads. |
-| `↓` / `[` | `Ctrl+Shift+↓` | **Delay Lyrics (-0.10s)** | Calibrate lyrics to appear later if text leads. |
-| `0` | - | **Reset Calibration** | Reset sync offset to default (+0.25s vocal anticipation). |
-| `K` | `Ctrl+Shift+K` | **Toggle Karaoke Mode** | Switch between real-time synced lyrics and track metadata. |
-| `T` | `Ctrl+Shift+T` | **Toggle Click-Through** | Enable click-through mode to interact with windows behind. |
-| `F` | `Ctrl+Shift+F` | **Toggle Falling Stream** | Toggle digital matrix rain and musical note particles. |
-| `G` | `Ctrl+Shift+G` | **Toggle CRT Scanlines** | Toggle subtle terminal monitor scanlines on cards. |
+| `↑` / `]` | `Ctrl+Shift+↑` | **Advance Timing (+0.10s)** | Calibrate lyrics earlier if audio leads. |
+| `↓` / `[` | `Ctrl+Shift+↓` | **Delay Timing (-0.10s)** | Calibrate lyrics later if text leads. |
+| `0` | - | **Reset Timing** | Reset offset to default (+0.20s natural reading anticipation). |
+| `K` | `Ctrl+Shift+K` | **Toggle Lyrics Mode** | Switch between synchronized lyrics and song metadata. |
+| `T` | `Ctrl+Shift+T` | **Toggle Click-Through** | Let mouse clicks pass through overlay to underlying apps. |
+| `F` | `Ctrl+Shift+F` | **Toggle Falling Notes** | Enable or disable the falling musical notes particle effect. |
 | `Space` | - | **Play / Pause** | Toggle Spotify playback. |
 | `Right` / `N` | - | **Next Track** | Skip to next track on Spotify. |
-| `Left` / `P` | - | **Previous Track** | Return to previous track. |
-| `Esc` / `Q` | - | **Terminate Daemon** | Exit overlay cleanly. |
+| `Left` / `P` | - | **Previous Track** | Return to previous track on Spotify. |
+| `Esc` / `Q` | - | **Exit Overlay** | Close the overlay cleanly. |
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Clone & Install
+### 1. Requirements
+- Windows 10 or Windows 11
+- Python 3.10+
+- Official Spotify Desktop App
+
+### 2. Installation
 ```bash
+# Clone the repository
 git clone https://github.com/RobsHs/spotify-lyrics-overlay.git
 cd spotify-lyrics-overlay
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Launch
+### 3. Launch
 ```bash
 python song.py
 ```
-*Play any song on Spotify, and your holographic lyrics overlay will immediately lock onto your music!*
+
+*Open Spotify, play any song, and watch the floating aesthetic lyrics overlay seamlessly take over your desktop!*
 
 ---
 
-## ⚙️ Architecture & Data Flow
+## ⚙️ Architecture & Data Pipeline
 
 ```
-┌──────────────────┐       Winsdk GSMTC       ┌──────────────────────┐
-│  Spotify Desktop │ ───────────────────────► │ Windows Media Bridge │
-└──────────────────┘                          └──────────┬───────────┘
-                                                         │ Title + Artist + Art
-                                                         ▼
-┌──────────────────┐       LRCLIB API         ┌──────────────────────┐
-│ Local Disk Cache │ ◄──────────────────────► │  Lyrics Fetch Engine │
-└──────────────────┘                          └──────────┬───────────┘
-                                                         │ Synced [mm:ss]
-                                                         ▼
-┌──────────────────┐    Pillow Quantization   ┌──────────────────────┐
-│  Adaptive Colors │ ◄─────────────────────── │ Palette Lerp Engine  │
-└──────────────────┘                          └──────────┬───────────┘
-                                                         │ Tint Colors
-                                                         ▼
-┌──────────────────┐   Chroma-Key Win32 API   ┌──────────────────────┐
-│ Windows Desktop  │ ◄─────────────────────── │ 60 FPS Pygame Engine │
-│ Transparent HUD  │                          │ Rising Cards + Rain  │
-└──────────────────┘                          └──────────────────────┘
+┌──────────────────┐       Winsdk GSMTC       ┌────────────────────────┐
+│  Spotify Desktop │ ───────────────────────► │ Windows Media Listener │
+└──────────────────┘                          └───────────┬────────────┘
+                                                          │ Title + Artist + Art
+                                                          ▼
+┌──────────────────┐        LRCLIB API        ┌────────────────────────┐
+│ Local Disk Cache │ ◄──────────────────────► │  Lyrics Fetch Engine   │
+└──────────────────┘                          └───────────┬────────────┘
+                                                          │ Synced [mm:ss]
+                                                          ▼
+┌──────────────────┐    Pillow Color Thievery ┌────────────────────────┐
+│ Dynamic Palette  │ ◄─────────────────────── │  Palette Lerp Engine   │
+└──────────────────┘                          └───────────┬────────────┘
+                                                          │ Interpolated Colors
+                                                          ▼
+┌──────────────────┐   Chroma-Key Win32 API   ┌────────────────────────┐
+│ Windows Desktop  │ ◄─────────────────────── │  60 FPS Pygame Engine  │
+│ Aesthetic Overlay│                          │ Rising Cards + Notes   │
+└──────────────────┘                          └────────────────────────┘
 ```
 
 ---
 
-## 🤝 Community & Sharing
+## 📱 Content Creation & Social Media
 
-Love this project? Share it with the community:
-
-- **Reddit**: Post to [r/Python](https://reddit.com/r/Python), [r/unixporn](https://reddit.com/r/unixporn), or [r/spotify](https://reddit.com/r/spotify)!
-- **Twitter / X**: Tag `#Python #Spotify #Cyberpunk #OpenSource` and mention `@RobsHs`!
-- **GitHub**: Give a ⭐ Star to support development!
+If you record aesthetic desktop videos or TikTok reels with this overlay:
+- Tag `@RobsHs` or mention `#SpotifyOverlay` so we can repost and feature your setup!
+- Star ⭐ the repository on GitHub to support active open-source updates.
 
 ---
 
