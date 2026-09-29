@@ -27,22 +27,23 @@ Whenever you play a track on Spotify, each lyric line appears in its own separat
 
 | Feature | Standard Lyrics Widgets | **Spotify Aesthetic Overlay** |
 |:---|:---:|:---:|
-| **Card Animation** | Static box or bouncing text | **Individual floating cards with natural sway** 🎈 |
+| **Card Animation** | Static box or bouncing text | **Alternating Left & Right floating stream** 🎈 |
 | **Lyric Appearance**| Whole sentence pops up at once | **Real-time 1-by-1 character typewriter sync** ⌨️ |
 | **Card Dissolve**   | Abrupt cut or plain fade | **Radiant white flash/blink peak before dissolve** 💡 |
+| **Screen Layout**   | Clustered in center | **Dual Left/Right columns with smooth glide-in** 📱 |
 | **Typography** | Generic monospace / sans | **High-legibility serif quotes & clean layouts** 🖋️ |
 | **Color Theming** | Fixed dark or white mode | **Adaptive color extraction from album artwork** 🎨 |
 | **Atmosphere Effect** | None | **Falling musical notes (`♪`, `♫`, `♬`, `♩`)** 🎵 |
 | **API Key Setup** | Requires Spotify Developer account | **100% Zero API Keys Needed (Plug & Play)** 🔌 |
 | **Sync Precision** | Often 2–3 seconds delayed | **Hardware timestamp extrapolation (Zero Delay)** ⚡ |
 | **Desktop Integration**| Clunky windowed frame | **Transparent click-through desktop overlay** 🖥️ |
-| **Content Creation** | Unsuitable for filming | **Optimized for TikTok & Reels screen recording** 📱 |
+| **Content Creation** | Unsuitable for filming | **Optimized for TikTok & Reels screen recording** 🎬 |
 
 ---
 
 ## 🌟 Core Highlights
 
-- **🎈 Individual Rising Cards**: Each lyric line emerges as its own rounded frosted glass card at the bottom of the screen, floating upwards (`y -= speed`) with gentle horizontal sway (`Δx = sin(...) * amp`).
+- **🎈 Dual-Side Rising Cascade**: Cards alternate between the **Left** and **Right** sides of the screen (gliding smoothly inward with ease-out cubic motion), preventing center crowding and creating a balanced, cinematic floating stream.
 - **⌨️ Real-Time Typewriter Reveal**: Instead of popping up abruptly, each lyric line is revealed character-by-character in perfect real-time sync with the artist's vocal delivery.
 - **💡 Radiant White Blink & Dissolve**: Upon reaching the upper screen threshold, the card pulses with a crisp, radiant white flash/blink before dissolving seamlessly into thin air (*just like in viral TikTok edits*).
 - **🎨 Dynamic Album Cover Harmony**: Automatically samples dominant colors from the current album art to tint card backgrounds, glowing borders, dynamic island notch, and falling notes with smooth linear interpolation (*lerp crossfade*).

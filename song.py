@@ -500,20 +500,26 @@ class RisingAestheticCard:
     """
     Frosted glass rounded card that rises gracefully upwards while swaying
     gently left and right, with real-time character-by-character typewriter reveal,
-    radiant white flash/blink upon reaching the top, and smooth dissolve.
+    smooth side entry from left/right, radiant white flash/blink upon reaching the top,
+    and smooth dissolve.
     """
-    def __init__(self, text, start_x, start_y, palette, time_tag, cover_surface=None, fonts=None, title="", artist="", start_time=None, next_time=None):
+    def __init__(self, text, start_x, start_y, palette, time_tag, cover_surface=None, fonts=None, title="", artist="", start_time=None, next_time=None, side="left"):
         self.text = text.strip().strip('"').strip("'")
         self.card_w = 480
         self.card_h = 195
         self.base_x = start_x
         self.x = start_x
         self.y = start_y
+        self.side = side
+        
+        # Smooth slide-in entry animation from left or right
+        self.entry_duration = 0.60
+        self.entry_offset = -80.0 if side == "left" else 80.0
         
         # Smooth upward floating speed
         self.speed_y = random.uniform(1.25, 1.55) * BASE_FLOAT_SPEED
         # Left-right swaying physics ('kiri-kanan goyang dikit')
-        self.sway_amp = random.uniform(22.0, 36.0)
+        self.sway_amp = random.uniform(20.0, 34.0)
         self.sway_freq = random.uniform(0.95, 1.35)
         self.phase = random.uniform(0, math.pi * 2)
         
@@ -572,10 +578,20 @@ class RisingAestheticCard:
         # 1. Rise upwards
         self.y -= self.speed_y * dt * 60.0
         
-        # 2. Sway gently left and right
-        self.x = self.base_x + math.sin(current_time * self.sway_freq + self.phase) * self.sway_amp
+        # 2. Smooth slide-in entry from left or right side
+        age = current_time - self.spawn_time
+        if age < self.entry_duration:
+            t = age / self.entry_duration
+            ease_out = 1.0 - ((1.0 - t) ** 3)
+            current_entry_offset = self.entry_offset * (1.0 - ease_out)
+        else:
+            current_entry_offset = 0.0
 
-        # 3. Real-Time Character-by-Character Typewriter Sync with Music
+        # 3. Sway gently left and right ('kiri-kanan goyang dikit')
+        sway_offset = math.sin(current_time * self.sway_freq + self.phase) * self.sway_amp
+        self.x = self.base_x + current_entry_offset + sway_offset
+
+        # 4. Real-Time Character-by-Character Typewriter Sync with Music
         if self.start_time is not None:
             elapsed = playback_pos - self.start_time
             if self.typing_duration > 0:
@@ -768,9 +784,10 @@ class FloatingLyricsApp:
         # Precision Sync Offset (in seconds)
         self.sync_offset = DEFAULT_SYNC_OFFSET
 
-        # Rising Aesthetic Cards List
+        # Rising Aesthetic Cards List & Alternating Left/Right Sides
         self.cards = []
         self.last_spawned_lyric = ""
+        self.spawn_side = "left"
 
         # Color Palettes & Smooth Transition
         self.current_theme = dict(DEFAULT_THEME_RGB)
@@ -905,10 +922,27 @@ class FloatingLyricsApp:
             
             card_w = 480
             card_h = 195
-            center_x = (self.screen_w // 2 - card_w // 2)
-            # Subtle random horizontal spawn displacement
-            spawn_x = center_x + random.uniform(-110, 110)
-            spawn_x = max(30, min(self.screen_w - card_w - 30, spawn_x))
+
+            # Alternate spawn sides between Left and Right for dual-stream aesthetic
+            current_side = self.spawn_side
+            self.spawn_side = "right" if self.spawn_side == "left" else "left"
+
+            margin = 55
+            half_w = self.screen_w // 2
+
+            if current_side == "left":
+                # Left side zone: comfortable placement on left side of the screen
+                target_center = self.screen_w * 0.22
+                base_calc = target_center - (card_w // 2) + random.uniform(-25, 30)
+                max_left = max(margin, half_w - card_w - 30)
+                spawn_x = max(margin, min(max_left, base_calc))
+            else:
+                # Right side zone: comfortable placement on right side of the screen
+                target_center = self.screen_w * 0.78
+                base_calc = target_center - (card_w // 2) + random.uniform(-30, 25)
+                min_right = min(self.screen_w - card_w - margin, half_w + 30)
+                spawn_x = max(min_right, min(self.screen_w - card_w - margin, base_calc))
+
             spawn_y = float(self.screen_h - card_h - 50)
 
             # Format current timestamp tag [mm:ss]
@@ -927,7 +961,8 @@ class FloatingLyricsApp:
                 title=self.current_title,
                 artist=self.current_artist,
                 start_time=found_time,
-                next_time=next_time
+                next_time=next_time,
+                side=current_side
             )
             self.cards.append(new_card)
 
