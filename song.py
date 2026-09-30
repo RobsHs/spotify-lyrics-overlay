@@ -458,40 +458,67 @@ class SpotifyMonitor:
 # Aesthetic Falling Musical Notes Particle System
 # -------------------------------------------------------------
 class FallingNoteParticle:
-    """Aesthetic musical notes drifting gently downwards in matching album colors."""
+    """Aesthetic musical notes drifting gently downwards in matching album colors with multi-tier depth & high visibility."""
     NOTES = ["♪", "♫", "♬", "♩"]
 
     def __init__(self, screen_w, screen_h, initial_scatter=False):
         self.screen_w = screen_w
         self.screen_h = screen_h
         self.note = random.choice(self.NOTES)
-        self.size = random.randint(16, 28)
-        self.x = random.uniform(20, screen_w - 20)
+        # Depth tiers: sm (24px), md (34px), lg (46px)
+        self.tier = random.choices(["sm", "md", "lg"], weights=[30, 45, 25])[0]
+
+        if self.tier == "lg":
+            self.speed_y = random.uniform(2.2, 3.6) * SPEED_MULTIPLIER
+            self.sway_amp = random.uniform(18, 30)
+            self.sway_freq = random.uniform(0.9, 1.6)
+        elif self.tier == "md":
+            self.speed_y = random.uniform(1.6, 2.6) * SPEED_MULTIPLIER
+            self.sway_amp = random.uniform(13, 22)
+            self.sway_freq = random.uniform(1.0, 1.8)
+        else:  # sm
+            self.speed_y = random.uniform(1.1, 1.9) * SPEED_MULTIPLIER
+            self.sway_amp = random.uniform(8, 16)
+            self.sway_freq = random.uniform(1.1, 1.9)
+
+        self.x = random.uniform(15, screen_w - 15)
         self.base_x = self.x
-        self.y = random.uniform(0, screen_h) if initial_scatter else random.uniform(-50, -10)
-        self.speed_y = random.uniform(1.2, 2.6) * SPEED_MULTIPLIER
-        self.sway_amp = random.uniform(10, 26)
-        self.sway_freq = random.uniform(0.9, 1.8)
+        self.y = random.uniform(0, screen_h) if initial_scatter else random.uniform(-60, -10)
         self.phase = random.uniform(0, math.pi * 2)
-        self.alpha = random.randint(90, 200)
+        # High opacity for rich visibility (180 to 255)
+        self.alpha = random.randint(180, 255)
+        self.is_sparkle = (random.random() < 0.25)
 
     def update(self, dt, current_time):
         self.y += self.speed_y * dt * 60.0
         self.x = self.base_x + math.sin(current_time * self.sway_freq + self.phase) * self.sway_amp
 
-        if self.y > self.screen_h + 30:
+        if self.y > self.screen_h + 35:
             self.reset()
 
     def reset(self):
         self.note = random.choice(self.NOTES)
-        self.size = random.randint(16, 28)
-        self.base_x = random.uniform(20, self.screen_w - 20)
+        self.tier = random.choices(["sm", "md", "lg"], weights=[30, 45, 25])[0]
+
+        if self.tier == "lg":
+            self.speed_y = random.uniform(2.2, 3.6) * SPEED_MULTIPLIER
+            self.sway_amp = random.uniform(18, 30)
+            self.sway_freq = random.uniform(0.9, 1.6)
+        elif self.tier == "md":
+            self.speed_y = random.uniform(1.6, 2.6) * SPEED_MULTIPLIER
+            self.sway_amp = random.uniform(13, 22)
+            self.sway_freq = random.uniform(1.0, 1.8)
+        else:  # sm
+            self.speed_y = random.uniform(1.1, 1.9) * SPEED_MULTIPLIER
+            self.sway_amp = random.uniform(8, 16)
+            self.sway_freq = random.uniform(1.1, 1.9)
+
+        self.base_x = random.uniform(15, self.screen_w - 15)
         self.x = self.base_x
-        self.y = random.uniform(-40, -10)
-        self.speed_y = random.uniform(1.2, 2.6) * SPEED_MULTIPLIER
-        self.sway_amp = random.uniform(10, 26)
+        self.y = random.uniform(-50, -10)
         self.phase = random.uniform(0, math.pi * 2)
-        self.alpha = random.randint(90, 200)
+        self.alpha = random.randint(180, 255)
+        self.is_sparkle = (random.random() < 0.25)
 
 # -------------------------------------------------------------
 # Individual Rising Aesthetic Card (Typewriter & White Blink)
@@ -798,11 +825,13 @@ class FloatingLyricsApp:
         self.fonts = {
             "lyric": pygame.font.SysFont("georgia", 21, bold=True),
             "sub": pygame.font.SysFont("segoeui", 11),
-            "music": pygame.font.SysFont("segoeuisymbol", 22)
+            "music_sm": pygame.font.SysFont("segoeuisymbol", 24),
+            "music_md": pygame.font.SysFont("segoeuisymbol", 34),
+            "music_lg": pygame.font.SysFont("segoeuisymbol", 46),
         }
 
-        # Falling Musical Note Particles
-        self.particles = [FallingNoteParticle(self.screen_w, self.screen_h, initial_scatter=True) for _ in range(35)]
+        # Falling Musical Note Particles (increased to 70 for vibrant visibility)
+        self.particles = [FallingNoteParticle(self.screen_w, self.screen_h, initial_scatter=True) for _ in range(70)]
         self.falling_notes_enabled = True
 
         # Global Hotkey debounce
@@ -982,12 +1011,30 @@ class FloatingLyricsApp:
 
         accent_col = self.current_theme["accent"]
 
-        # 1. Render Falling Musical Notes
+        # 1. Render Falling Musical Notes (High Visibility & Contrast)
         if self.falling_notes_enabled:
+            shadow_col = (12, 12, 18)
             for p in self.particles:
-                p_surf = self.fonts["music"].render(p.note, True, accent_col)
-                p_surf.set_alpha(p.alpha)
-                self.screen.blit(p_surf, (int(p.x), int(p.y)))
+                font = self.fonts.get(f"music_{p.tier}", self.fonts["music_md"])
+                
+                # 1a. Drop shadow for distinct contrast on any desktop background
+                shadow_surf = font.render(p.note, True, shadow_col)
+                shadow_surf.set_alpha(int(p.alpha * 0.75))
+                self.screen.blit(shadow_surf, (int(p.x + 2), int(p.y + 2)))
+
+                # 1b. Vibrant core note with optional luminous sparkle highlight
+                if p.is_sparkle:
+                    note_col = (
+                        min(255, accent_col[0] + 65),
+                        min(255, accent_col[1] + 65),
+                        min(255, accent_col[2] + 65)
+                    )
+                else:
+                    note_col = accent_col
+
+                note_surf = font.render(p.note, True, note_col)
+                note_surf.set_alpha(p.alpha)
+                self.screen.blit(note_surf, (int(p.x), int(p.y)))
 
         # 2. Render All Separate Rising Aesthetic Cards
         for card in self.cards:
